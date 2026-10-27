@@ -2,21 +2,24 @@
 
 A private, single-file personal net-worth tracker for **fixed deposits** and **investment platforms**.
 
-No server or build step to set up. It's one HTML file. This guide takes you from zero to your own free, online copy, with optional cloud sync through your own Firebase project so your data follows you across devices.
+No server or build step to set up. It's one HTML file.
+
+**Use it online:** https://rachelcjw101.github.io/raych-ledger/
+
+This guide covers using it on your computer and setting up optional cloud sync through your own Firebase project, so your data follows you across devices.
 
 ## Contents
 
 1. [Features](#features)
 2. [What you'll need](#what-youll-need)
 3. [Step 1: Try it on your computer](#step-1-try-it-on-your-computer)
-4. [Step 2: Put it online for free (GitHub Pages)](#step-2-put-it-online-for-free-github-pages)
-5. [Step 3: Store your data in Firebase (optional, free)](#step-3-store-your-data-in-firebase-optional-free)
-6. [Other free hosting options](#other-free-hosting-options)
-7. [Using RaychLedger](#using-raychledger)
-8. [Backups and moving data](#backups-and-moving-data)
-9. [Customising](#customising)
-10. [How the numbers are calculated](#how-the-numbers-are-calculated)
-11. [Troubleshooting](#troubleshooting)
+4. [Step 2: Store your data in Firebase (optional, free)](#step-2-store-your-data-in-firebase-optional-free)
+5. [Other free hosting options](#other-free-hosting-options)
+6. [Using RaychLedger](#using-raychledger)
+7. [Backups and moving data](#backups-and-moving-data)
+8. [Customising](#customising)
+9. [How the numbers are calculated](#how-the-numbers-are-calculated)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -35,8 +38,7 @@ No server or build step to set up. It's one HTML file. This guide takes you from
 | For | You need | Cost |
 |---|---|---|
 | Step 1: use it on your computer | A web browser | Free |
-| Step 2: put it online | A [GitHub](https://github.com) account | Free |
-| Step 3: sync data to the cloud | A Google account (for [Firebase](https://firebase.google.com)) | Free (no credit card) |
+| Step 2: sync data to the cloud | A Google account (for [Firebase](https://firebase.google.com)) | Free (no credit card) |
 
 You don't need to know how to code. You'll only paste one block of settings into the file.
 
@@ -48,75 +50,28 @@ You don't need to know how to code. You'll only paste one block of settings into
 2. Double-click it. It opens in your browser (Chrome, Edge, Firefox or Safari).
 3. Click **Add a fixed deposit** or **Add a platform** and enter something.
 
-That's it. Your data is saved in that browser on that computer. To use it from your phone too, carry on to Step 2.
+That's it. Your data is saved in that browser on that computer. To have the same data on your phone too, carry on to Step 2.
 
 ---
 
-## Step 2: Put it online for free (GitHub Pages)
-
-GitHub Pages hosts the file at a public link, such as `https://your-username.github.io/raychledger/`.
-
-### 2.1 Create a repository
-
-1. Sign in to GitHub and click **+ → New repository** (top right).
-2. **Repository name:** `raychledger` (or anything you like).
-3. Choose **Public**.
-   GitHub Pages on a private repository needs a paid plan. A public repo only shows the *code*; **your financial data is never in the repo**.
-4. Click **Create repository**.
-
-### 2.2 Upload the files
-
-1. On the new repo's page, click **uploading an existing file**.
-2. Drag in `index.html` (and `README.md` if you want this guide in your repo too).
-   `index.html` must be in the top level of the repo, not inside a folder.
-3. Click **Commit changes**.
-
-### 2.3 Turn on Pages
-
-1. In the repo, go to **Settings → Pages** (in the left sidebar).
-2. Under **Build and deployment → Source**, choose **Deploy from a branch**.
-3. Set **Branch** to `main` and the folder to `/ (root)`, then click **Save**.
-4. Wait a minute or two, then refresh the page. A box at the top shows **"Your site is live at …"**. That's your link.
-
-To update the site later, upload a new `index.html` (or click the file on GitHub and use the pencil icon to edit it). Pages republishes automatically in a minute or two.
-
-<details>
-<summary>Prefer the command line?</summary>
-
-```bash
-git init
-git add index.html README.md
-git commit -m "Add RaychLedger"
-git branch -M main
-git remote add origin https://github.com/<your-username>/raychledger.git
-git push -u origin main
-```
-
-Then turn on Pages as in 2.3.
-</details>
-
-At this point the site works, but **each browser keeps its own data**. Your laptop and your phone won't see each other's entries. Step 3 fixes that.
-
----
-
-## Step 3: Store your data in Firebase (optional, free)
+## Step 2: Store your data in Firebase (optional, free)
 
 [Firebase](https://firebase.google.com) is Google's app platform. You'll create your **own** Firebase project, so your data sits in your Google account and nobody else's, including the author of this repo. After this step:
 
 - you sign in to RaychLedger with Google
 - your data is saved to the cloud and syncs live across all your devices
-- only you can read or change it (enforced by the security rules in 3.5)
+- only you can read or change it (enforced by the security rules in 2.5)
 
 The free **Spark plan** is far more than enough for one person and doesn't need a credit card.
 
-### 3.1 Create a Firebase project
+### 2.1 Create a Firebase project
 
 1. Go to the [Firebase console](https://console.firebase.google.com) and sign in with your Google account.
 2. Click **Create a project** (or **Add project**).
 3. Name it, e.g. `raychledger`, accept the terms and click **Continue**.
 4. Turning off **Google Analytics** is fine because RaychLedger doesn't use it. Then click **Create project**.
 
-### 3.2 Register a web app and copy its settings
+### 2.2 Register a web app and copy its settings
 
 1. On the project's home page, click the **Web** icon (`</>`). It may be under **+ Add app**.
 2. Give it a nickname, e.g. `raychledger-web`. Leave **Firebase Hosting** unticked and click **Register app**.
@@ -136,20 +91,20 @@ The free **Spark plan** is far more than enough for one person and doesn't need 
    You can find it again later under **Project settings (gear icon) → General → Your apps**.
 4. Click **Continue to console**. You can skip the "install the SDK" instructions; RaychLedger loads Firebase for you.
 
-### 3.3 Turn on Google sign-in
+### 2.3 Turn on Google sign-in
 
 1. In the left menu, go to **Build → Authentication** and click **Get started**.
 2. On the **Sign-in method** tab, click **Google**.
 3. Switch on **Enable**, choose your email as the **Project support email**, and click **Save**.
 
-### 3.4 Create the database
+### 2.4 Create the database
 
 1. In the left menu, go to **Build → Firestore Database** and click **Create database**.
 2. If asked for an edition, pick **Standard**.
 3. Pick a **location** close to you, e.g. `asia-southeast1 (Singapore)`. You can't change this later.
 4. Choose **Start in production mode** and click **Create**.
 
-### 3.5 Lock the database down to only you
+### 2.5 Lock the database down to only you
 
 This is the step that keeps your data private. Open the **Rules** tab of Firestore Database, **replace everything** in the editor with the rules below, and click **Publish**:
 
@@ -165,27 +120,27 @@ service cloud.firestore {
 }
 ```
 
-### 3.6 Allow your website to sign in
+### 2.6 Allow your website to sign in
 
 Firebase only allows Google sign-in from websites you approve.
 
 1. Go to **Build → Authentication → Settings → Authorized domains**.
-2. Click **Add domain** and enter your GitHub Pages domain **without** `https://` or the folder name, e.g.:
-   `your-username.github.io`
+2. Click **Add domain** and enter your website's domain **without** `https://` or any folder name, e.g.:
+   `your-site.netlify.app`
 3. Click **Add**.
 
 `localhost` and your project's own `*.firebaseapp.com` / `*.web.app` domains are already on the list.
 
-### 3.7 Paste your settings into `index.html`
+### 2.7 Paste your settings into `index.html`
 
-1. Open `index.html`. You can edit it right on GitHub: click the file, then the **pencil icon**.
+1. Open `index.html` in a text editor such as Notepad or VS Code.
 2. Near the top of the `<script>` section, find the `CONFIG` block and its last line:
 
    ```js
    firebase: null,
    ```
 
-3. Replace `null` with the settings you copied in 3.2, keeping the comma at the end:
+3. Replace `null` with the settings you copied in 2.2, keeping the comma at the end:
 
    ```js
    firebase: {
@@ -198,11 +153,11 @@ Firebase only allows Google sign-in from websites you approve.
    },
    ```
 
-4. Click **Commit changes** (or upload the edited file). Wait a minute for GitHub Pages to update.
+4. Save the file, then upload it to your site again (see [Other free hosting options](#other-free-hosting-options)).
 
-### 3.8 Sign in and check it works
+### 2.8 Sign in and check it works
 
-1. Open your GitHub Pages link. A **Sign in to sync** card appears at the top.
+1. Open your site's link. A **Sign in to sync** card appears at the top.
 2. Click **Sign in with Google** and choose your account.
 3. The status at the top right turns green and says **synced to cloud**.
    If that browser already had data in it, you're asked whether to copy it to your cloud account.
@@ -214,8 +169,8 @@ To confirm that your data is in Firebase, open **Firestore Database → Data** i
 
 Yes. The `apiKey` in a Firebase web config is **not a password**. It only tells the app which Firebase project to talk to, and Google designs it to be public. What protects your data is:
 
-- **the security rules from 3.5**: only the signed-in owner can read or write their own document
-- **Authorized domains from 3.6**: sign-in only works from the sites you listed
+- **the security rules from 2.5**: only the signed-in owner can read or write their own document
+- **Authorized domains from 2.6**: sign-in only works from the sites you listed
 
 Never paste a *service account* key or private key into the file. RaychLedger doesn't need one.
 
@@ -237,7 +192,7 @@ Each user's whole ledger is stored as a single document (Firestore's limit is 1 
 
 ### Firebase Hosting
 
-If you set up Firebase in Step 3, you can host the page there too, at `https://<project-id>.web.app`. That domain is already authorised for sign-in.
+If you set up Firebase in Step 2, you can host the page there too, at `https://<project-id>.web.app`. That domain is already authorised for sign-in.
 
 1. Install [Node.js](https://nodejs.org) (LTS version).
 2. In a terminal, install the Firebase tools and log in:
@@ -274,7 +229,7 @@ If you set up Firebase in Step 3, you can host the page there too, at `https://<
 
 1. Go to [app.netlify.com/drop](https://app.netlify.com/drop).
 2. Drag the folder that contains `index.html` onto the page. You get a live link straight away.
-3. Sign up for a free account if you want the site to stay up. If you use Firebase sync, add the Netlify domain (e.g. `your-site.netlify.app`) to **Authorized domains** (see 3.6).
+3. Sign up for a free account if you want the site to stay up. If you use Firebase sync, add the Netlify domain (e.g. `your-site.netlify.app`) to **Authorized domains** (see 2.6).
 
 ---
 
@@ -291,7 +246,7 @@ If you set up Firebase in Step 3, you can host the page there too, at `https://<
 - **Data → Restore from backup…** loads a backup file and **replaces** the current data.
 - **Data → Export to CSV** gives you a spreadsheet you can open in Excel.
 
-**Without Firebase**, data lives in each browser separately, and clearing your browser data erases it. Download backups regularly, and use backup and restore to move data between devices. Note that the local file, your GitHub Pages link and any other link each count as a separate place.
+**Without Firebase**, data lives in each browser separately, and clearing your browser data erases it. Download backups regularly, and use backup and restore to move data between devices. Note that the local file and each online link count as separate places.
 
 **With Firebase**, your data is in the cloud and syncs automatically wherever you sign in. Backups are still a good idea. While you're signed out, anything you add is saved only in that browser.
 
@@ -305,7 +260,7 @@ const CONFIG = {
   locale: "en-MY",          // number formatting, e.g. "en-US", "en-GB", "en-SG"
   altLabel: "Earmarked FD", // name of the second FD bucket, e.g. "Emergency fund FD"
   banks: ["Maybank","CIMB","Public Bank","RHB","Hong Leong","AmBank","Other"],
-  firebase: null,           // your Firebase settings (see Step 3), or null for device-only
+  firebase: null,           // your Firebase settings (see Step 2), or null for device-only
 };
 ```
 
@@ -324,11 +279,10 @@ For example, RM 10,000 at 3.50% p.a. for 6 months (184 days) earns about RM 176.
 
 | Problem | Fix |
 |---|---|
-| GitHub Pages link shows "404 / Site not found" | Check that Pages is turned on (2.3) and that `index.html` is in the top level of the repo. Wait a few minutes after each change. |
-| Sign-in says **unauthorized-domain** | Add your site's domain under Authentication → Settings → Authorized domains (3.6). |
+| Sign-in says **unauthorized-domain** | Add your site's domain under Authentication → Settings → Authorized domains (2.6). |
 | Sign-in doesn't work when I double-click the file | Google sign-in doesn't work from a file opened on your computer (`file://`). Use your online link instead. |
-| **Missing or insufficient permissions** | Your Firestore rules aren't set up. Paste the rules from 3.5 and click **Publish**. |
-| Status says **sync error** | Hover over it for details. Usually it's the rules (3.5) or the Firebase settings pasted wrongly (3.7). Check for a missing comma or quote. |
+| **Missing or insufficient permissions** | Your Firestore rules aren't set up. Paste the rules from 2.5 and click **Publish**. |
+| Status says **sync error** | Hover over it for details. Usually it's the rules (2.5) or the Firebase settings pasted wrongly (2.7). Check for a missing comma or quote. |
 | Sign-in popup flashes and closes | Allow popups for your site in the browser, then try again. |
 | My data disappeared | Without Firebase, check you're in the same browser and at the same link you used before, then restore from your latest backup. With Firebase, sign in with the same Google account. |
 
