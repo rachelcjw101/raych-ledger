@@ -85,7 +85,10 @@ header.top{display:flex;align-items:center;gap:18px;padding:22px 2px 18px;flex-w
 .iconbtn:hover{border-color:var(--line-strong);color:var(--ink);}
 .status-dot{font-size:11px;color:var(--ink-faint);display:flex;align-items:center;gap:6px;
   padding:0 4px;letter-spacing:.02em;}
-.status-dot i{width:7px;height:7px;border-radius:50%;background:var(--warn);display:inline-block;}
+.status-dot i{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);display:inline-block;}
+.status-dot.local i{background:var(--warn)}
+.status-dot.synced i{background:var(--gains)}
+.status-dot.error i{background:var(--neg)}
 .datamenu-wrap{position:relative;}
 .datamenu{position:absolute;top:46px;right:0;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r-sm);box-shadow:var(--shadow-lg);padding:5px;min-width:210px;z-index:30;}
@@ -265,7 +268,8 @@ td.pos{color:var(--gains)}td.negv{color:var(--neg)}td.muted{color:var(--ink-fain
       <span class="sub" id="asof">as of —</span>
     </div>
     <div class="top-actions">
-      <span class="status-dot" title="Data is stored in this browser only"><i></i><span>saved on this device</span></span>
+      <span class="status-dot" id="syncStatus"><i></i><span>loading…</span></span>
+      <button class="btn sm" id="authBtn" hidden>Sign in</button>
       <div class="datamenu-wrap">
         <button class="btn sm" id="dataBtn" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Data
@@ -295,6 +299,14 @@ td.pos{color:var(--gains)}td.negv{color:var(--neg)}td.muted{color:var(--ink-fain
 
   <!-- OVERVIEW -->
   <section class="view active" id="view-overview">
+    <div class="card welcome" id="signin" hidden>
+      <div>
+        <h2 class="serif" style="font-size:20px">Sign in to sync</h2>
+        <p>Sign in with Google to load your ledger from the cloud and keep it in sync across devices. Until you do, anything you add is saved in this browser only.</p>
+      </div>
+      <div class="acts"><button class="btn primary sm" id="signinBtn">Sign in with Google</button></div>
+    </div>
+
     <div class="card welcome" id="welcome" hidden>
       <div>
         <h2 class="serif" style="font-size:20px">Welcome to RaychLedger</h2>
@@ -453,8 +465,9 @@ td.pos{color:var(--gains)}td.negv{color:var(--neg)}td.muted{color:var(--ink-fain
 <script>
 /* ============================================================
    RaychLedger — personal wealth tracker
-   A single HTML file. All data is kept in this browser's
-   localStorage; nothing is sent anywhere.
+   A single HTML file. By default all data is kept in this
+   browser's localStorage. Add your Firebase settings below to
+   sync it to your own Firebase project instead (see README).
    ============================================================ */
 
 /* ---------- Settings: edit these to suit you ---------- */
@@ -463,6 +476,11 @@ const CONFIG = {
   locale: "en-MY",         // number formatting, e.g. "en-US", "en-GB", "en-SG"
   altLabel: "Earmarked FD", // second FD bucket, e.g. "Emergency fund FD", "Side-income FD"
   banks: ["Maybank","CIMB","Public Bank","RHB","Hong Leong","AmBank","Other"],
+
+  // Optional cloud sync. Leave as null to keep data on this device only.
+  // To sync, paste the firebaseConfig object from your Firebase project, e.g.
+  // firebase: { apiKey:"...", authDomain:"...", projectId:"...", appId:"..." },
+  firebase: null,
 };
 
 const isoLocal = d => new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
@@ -474,23 +492,94 @@ const COLLS = ["fd","holdings","snapshots","flows"];
 const state = { fd:[], holdings:[], snapshots:[], flows:[], meta:{} };
 
 const LS_KEY = "raychledger.v1";
+let cloud = null;      // { ref, user } while signed in to Firebase
+let authState = "off"; // "off" (no Firebase) | "loading" | "out" | "in"
+
+const allData = ()=> ({fd:state.fd,holdings:state.holdings,snapshots:state.snapshots,flows:state.flows,meta:state.meta});
+const hasData = d=> !!d && COLLS.some(c=> Array.isArray(d[c]) && d[c].length);
+function applyData(d){
+  d=d||{};
+  COLLS.forEach(c=> state[c]=Array.isArray(d[c])? d[c] : []);
+  state.meta=d.meta||{};
+  if(!state.meta.startedAt) state.meta.startedAt=TODAY;
+}
 function lsLoad(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"null"); }catch(e){ return null; } }
-function lsSave(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({fd:state.fd,holdings:state.holdings,snapshots:state.snapshots,flows:state.flows,meta:state.meta})); }catch(e){} }
+function lsSave(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(allData())); }catch(e){} }
+
+// Save to Firebase when signed in, otherwise to this browser.
+function persist(){
+  if(!cloud){ lsSave(); return; }
+  cloud.ref.set({ data: JSON.parse(JSON.stringify(allData())), updatedAt: new Date().toISOString() })
+    .catch(e=>{ console.error(e); setStatus("error"); alert("Couldn't save to Firebase: "+e.message); });
+}
+
+function setStatus(mode, detail){
+  const el=document.getElementById("syncStatus");
+  const txt={local:"saved on this device", synced:"synced to cloud", connecting:"connecting…", error:"sync error"}[mode];
+  el.className="status-dot "+mode;
+  el.querySelector("span").textContent=txt;
+  el.title = mode==="synced"? "Signed in as "+(detail||"") : mode==="local"? "Data is stored in this browser only" : (detail||"");
+  const btn=document.getElementById("authBtn");
+  btn.hidden = !CONFIG.firebase || authState==="loading";
+  btn.textContent = authState==="in"? "Sign out" : "Sign in";
+}
 
 function initStorage(){
-  const saved = lsLoad();
-  if(saved) COLLS.concat("meta").forEach(c=>{ if(saved[c]) state[c]=saved[c]; });
-  if(!state.meta.startedAt){ state.meta.startedAt=TODAY; lsSave(); }
-  renderAll();
+  applyData(lsLoad());
+  if(CONFIG.firebase) initCloud();
+  else { setStatus("local"); renderAll(); }
+}
+
+const FIREBASE_VERSION = "10.12.2";
+function loadScript(src){
+  return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res;
+    s.onerror=()=>rej(new Error("Couldn't load "+src)); document.head.appendChild(s); });
+}
+async function initCloud(){
+  authState="loading"; setStatus("connecting"); renderAll();
+  try{
+    for(const m of ["app","auth","firestore"])
+      await loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-${m}-compat.js`);
+    firebase.initializeApp(CONFIG.firebase);
+  }catch(e){
+    console.error(e); authState="off"; setStatus("error","Couldn't start Firebase — using this device's storage.");
+    renderAll(); return;
+  }
+  let unsub=null;
+  firebase.auth().onAuthStateChanged(user=>{
+    if(unsub){ unsub(); unsub=null; }
+    if(!user){ // signed out: fall back to this device's data
+      cloud=null; authState="out"; applyData(lsLoad()); setStatus("local"); renderAll(); return;
+    }
+    cloud={ ref: firebase.firestore().collection("users").doc(user.uid), user };
+    authState="in"; setStatus("synced", user.email);
+    unsub=cloud.ref.onSnapshot(snap=>{
+      if(snap.exists){ applyData(snap.data().data); renderAll(); return; }
+      // First sign-in on this account: optionally copy this device's data up.
+      const local=lsLoad();
+      applyData(hasData(local) && confirm("Copy the data saved in this browser to your cloud account?")? local : null);
+      persist(); renderAll();
+    }, err=>{ console.error(err); setStatus("error", err.message);
+      alert("Couldn't read your data from Firebase: "+err.message+"\n\nCheck your Firestore security rules (see README)."); });
+  });
+}
+function signIn(){
+  firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>{
+    if(e.code==="auth/popup-closed-by-user" || e.code==="auth/cancelled-popup-request") return;
+    let hint="";
+    if(e.code==="auth/unauthorized-domain") hint="\n\nAdd this site's domain under Firebase → Authentication → Settings → Authorized domains.";
+    if(location.protocol==="file:") hint="\n\nGoogle sign-in doesn't work from a file opened on your computer. Open the hosted link instead.";
+    alert("Sign-in failed: "+e.message+hint);
+  });
 }
 
 function put(coll, doc){
   const i=state[coll].findIndex(x=>x.id===doc.id);
   if(i>=0) state[coll][i]=doc; else state[coll].push(doc);
-  lsSave(); renderAll();
+  persist(); renderAll();
 }
 function remove(coll,id){
-  state[coll]=state[coll].filter(x=>x.id!==id); lsSave(); renderAll();
+  state[coll]=state[coll].filter(x=>x.id!==id); persist(); renderAll();
 }
 
 /* ---------- Formatters ---------- */
@@ -533,7 +622,8 @@ function renderAll(){
   document.getElementById("fdCount").textContent = state.fd.length;
   document.getElementById("invCount").textContent = state.holdings.length;
   document.querySelectorAll(".altLabel").forEach(el=> el.textContent=CONFIG.altLabel);
-  document.getElementById("welcome").hidden = !!(state.fd.length||state.holdings.length);
+  document.getElementById("welcome").hidden = !!(state.fd.length||state.holdings.length) || authState==="out";
+  document.getElementById("signin").hidden = authState!=="out";
   renderHero(); renderKpis(); renderMaturities();
   renderFdTable(); renderInvTable(); renderGrowth();
   renderCharts();
@@ -1021,16 +1111,16 @@ async function importBackup(file){
   catch(e){ alert("Couldn't read that file — please pick a RaychLedger backup (.json)."); return; }
   if(!data || (!Array.isArray(data.fd) && !Array.isArray(data.holdings))){
     alert("That doesn't look like a RaychLedger backup."); return; }
-  if(!confirm("Restore this backup? It replaces ALL data currently in this browser.")) return;
+  if(!confirm(`Restore this backup? It replaces ALL data currently ${cloud?"in your cloud account":"in this browser"}.`)) return;
   COLLS.forEach(c=>{ state[c]=(Array.isArray(data[c])?data[c]:[]).map(r=> r.id? r : {...r,id:uid()}); });
   state.meta=data.meta||{startedAt:TODAY};
-  lsSave(); renderAll();
+  persist(); renderAll();
   toast("Backup restored");
 }
 function resetAll(){
-  if(!confirm("Erase ALL RaychLedger data in this browser? Download a backup first if you might need it.")) return;
+  if(!confirm(`Erase ALL RaychLedger data ${cloud?"in your cloud account":"in this browser"}? Download a backup first if you might need it.`)) return;
   COLLS.forEach(c=> state[c]=[]); state.meta={startedAt:TODAY};
-  lsSave(); renderAll(); showView("overview");
+  persist(); renderAll(); showView("overview");
   toast("All data erased");
 }
 function csvEsc(v){ v=(v==null?"":String(v)); return /[",\n]/.test(v)? '"'+v.replace(/"/g,'""')+'"' : v; }
@@ -1066,6 +1156,13 @@ dataMenu.addEventListener("click",e=>{
   else if(a==="reset") resetAll();
 });
 importFile.addEventListener("change",e=>{ const f=e.target.files[0]; if(f) importBackup(f); importFile.value=""; });
+
+/* ---------- Cloud sign-in ---------- */
+document.getElementById("signinBtn").addEventListener("click",signIn);
+document.getElementById("authBtn").addEventListener("click",()=>{
+  if(authState==="in"){ if(confirm("Sign out? Your data stays safe in the cloud.")) firebase.auth().signOut(); }
+  else signIn();
+});
 
 /* ---------- Go ---------- */
 initStorage();
