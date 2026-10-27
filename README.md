@@ -20,7 +20,56 @@ No sign-up, no server, no build step. Download one HTML file, open it in your br
 3. Add your fixed deposits and investment platforms.
 4. Every so often, update platform values and click **Record snapshot** on the *Growth & Cash Flow* tab.
 
-You can also host it for free with GitHub Pages: go to **Settings → Pages**, deploy from the `main` branch, and open the URL it gives you.
+Want a link you can open from any device? See [Deploying](#deploying) below.
+
+## Deploying
+
+RaychLedger is one static HTML file, so any free static host works. There's nothing to build or install.
+
+### Option 1: GitHub Pages (recommended)
+
+1. **Create a repository.** On GitHub, click **New repository**, give it a name (e.g. `raychledger`), make it **Public**, and click **Create repository**.
+2. **Upload the files.** On the new repo's page, click **uploading an existing file**, drag in `index.html` and `README.md`, then click **Commit changes**.
+   `index.html` must be in the top level of the repo, not inside a folder.
+3. **Turn on Pages.** Go to **Settings → Pages**. Under **Build and deployment**, set **Source** to **Deploy from a branch**, choose the `main` branch and the `/ (root)` folder, and click **Save**.
+4. **Open your site.** After a minute or two, the Pages settings show your link, which looks like:
+   `https://<your-username>.github.io/raychledger/`
+
+To update the site later, upload the new `index.html` to the repo (or edit it on GitHub). Pages republishes automatically within a minute or two.
+
+Prefer the command line?
+
+```bash
+git init
+git add index.html README.md
+git commit -m "Add RaychLedger"
+git branch -M main
+git remote add origin https://github.com/<your-username>/raychledger.git
+git push -u origin main
+```
+
+Then do step 3 above.
+
+> GitHub Pages on a **private** repository needs a paid GitHub plan. A public repo is fine: people can see the code, but **never your data**, because that only lives in your browser.
+
+### Option 2: Netlify Drop (no GitHub account needed)
+
+1. Go to [app.netlify.com/drop](https://app.netlify.com/drop).
+2. Drag the folder that contains `index.html` onto the page.
+3. Netlify gives you a live link straight away. Sign up for a free account if you want the site to stay up and to choose your own name.
+
+### Option 3: Just use it locally
+
+Keep `index.html` on your computer and double-click it whenever you need it. No hosting required.
+
+### Important: each copy has its own data
+
+Your data is stored per browser **and per address**. The local file, your GitHub Pages link and your Netlify link are three separate places, and each starts empty. To move your data between them, or to your phone:
+
+1. In the old copy: **Data → Download backup (.json)**
+2. In the new copy: **Data → Restore from backup…**
+
+Pick one copy as your main one and stick with it.
 
 ## Your data stays on your device
 
